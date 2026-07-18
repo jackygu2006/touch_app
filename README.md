@@ -1,264 +1,352 @@
-# NF Touch (ApkClaw)
+# Touch App
 
-An AI-powered Android automation app that lets LLM Agents control Android devices through natural language. Users send commands via messaging channels, and the AI Agent autonomously executes device operations.
+Touch App is the Android runtime of Touch Matrix. It turns a real Android phone into an addressable execution node that can be operated through Android Accessibility APIs, an on-device LLM agent loop, and the companion cloud control server.
 
-## Features
+The current codebase is centered around the mobile runtime itself:
 
-- **Multi-Channel Support**: DingTalk, Feishu, QQ, Discord, Telegram, WeChat
-- **AI-Driven**: LangChain4j integration with OpenAI/Anthropic and other LLMs
-- **Smart Tool System**: Rich toolset for tap, swipe, text input, screenshot, and more
-- **Cloud Control**: WebSocket-based communication with server for remote control
-- **Accessibility Service**: Device interaction via Android Accessibility Service
-- **Real-Time Screen Streaming**: Live screen preview and remote manipulation
-- **Multi-Device Management**: Connect and control multiple devices simultaneously
+- An Accessibility-based execution layer for gestures, key events, node lookup, screenshots, and text input
+- A LangChain4j-based agent loop that can run on-device tasks when an LLM is configured
+- A cloud control channel built on `WebSocket` for pairing, live screen streaming, remote commands, and dashboard feedback
+- A local LAN configuration server on port `9527` for browser-based configuration and debug tooling
 
-## System Requirements
+## What It Does
 
-- **Android Version**: Android 9.0 (API 28) and above
-- **Compile SDK**: Android SDK 36
-- **Java Version**: Java 17+
-- **Development Tools**: Android Studio (Ladybug or newer)
+- Controls a real Android device through `ClawAccessibilityService`
+- Streams the live screen to the dashboard through `CloudHub` and `ScreenStreamer`
+- Executes remote commands such as tap, swipe, key press, text input, and AI task dispatch
+- Keeps the runtime alive through a foreground service, battery optimization handling, and a scheduled keep-alive job
+- Shows execution status through a floating overlay
+- Applies privacy-aware screen tree reduction for finance-sensitive apps
 
-## Architecture Overview
+## Current Scope
 
-```
-┌────────────────────────────────────────────────────────────────────┐
-│                    Message Channel Layer                           │
-│  DingTalk │ Feishu │ QQ │ Discord │ Telegram │ WeChat             │
-└──────────────────────┬─────────────────────────────────────────────┘
-                       │ Receive messages
-                       ▼
-              ┌─────────────────┐
-              │  ChannelManager  │  Message routing & dispatch
-              └────────┬────────┘
-                       │
-              ┌────────▼────────┐
-              │ TaskOrchestrator │  Task lock & lifecycle
-              └────────┬────────┘
-                       │
-              ┌────────▼────────┐
-              │  AgentService    │  Agent loop
-              │                  │
-              │  ┌────────────┐  │
-              │  │  LLM Call  │◄─┼── LangChain4j (OpenAI / Anthropic)
-              │  └─────┬──────┘  │
-              │        │         │
-              │  ┌─────▼──────┐  │
-              │  │  Tool Exec │◄─┼── ToolRegistry → ClawAccessibilityService
-              │  └─────┬──────┘  │
-              │        │         │
-              │   Loop until     │
-              │   task complete  │
-              └────────┬────────┘
-                       │
-                       ▼
-              Reply to user via channel
-```
+The actual code currently boots with `ToolRegistry.DeviceType.MOBILE` and registers only the `Cloud` channel in `ChannelManager`.
 
-## Core Execution Flow
+That means the real, implemented control paths today are:
 
-1. **User sends message**: Sends natural language instruction via configured messaging channel
-2. **Channel check**: ChannelSetup verifies accessibility service is running
-3. **Task acquisition**: TaskOrchestrator acquires task lock (single-task model), presses Home to reset device state
-4. **Agent loop**: DefaultAgentService enters the Agent loop:
-   - Builds system prompt with device context (brand, model, resolution, registered tools)
-   - Calls LLM (via LangChain4j bridge)
-   - Extracts tool calls from LLM response
-   - Executes tools via ToolRegistry → ClawAccessibilityService
-   - Feeds tool results back to LLM
-   - Loops until `finish` tool is called or max iterations (40) reached
-5. **Result delivery**: Sends result back to user via the same channel
+1. **Cloud control**: Pair the phone with the Go server in `../server`, then control it from the web dashboard
+2. **Local browser config**: Open the built-in LAN config page from a PC browser on the same network
+3. **On-device AI task execution**: Available after LLM configuration, and currently triggered through the cloud command path
 
-## Installation & Usage
+## Architecture
 
-### Build
-
-Ensure **JDK 17+** is installed and **Android SDK 36** is configured before building.
-
-```bash
-# Clone repository
-git clone https://github.com/nextflow-matrix/nf-touch.git
-cd nf-touch
-
-# Set Android SDK path (adjust to your environment)
-export ANDROID_HOME=~/Library/Android/sdk
-
-# Debug build
-./gradlew assembleDebug
-
-# Release build
-./gradlew assembleRelease
+```text
+Dashboard / Browser
+        |
+        |  /api/pairing-code, /api/device/validate-token, /ws/dash
+        v
+Go server in ../server
+        |
+        |  /ws/device
+        v
+CloudHub -----------------------> ScreenStreamer
+   |                                   |
+   | remote commands                   | JPEG frames
+   v                                   v
+RemoteExecutor                    Live preview in dashboard
+   |
+   | cmd_tap / cmd_swipe / cmd_input / cmd_key / cmd_task
+   v
+ClawAccessibilityService
+   |
+   +--> gesture injection
+   +--> node tree inspection
+   +--> screenshots
+   +--> system key operations
+   |
+   v
+TaskOrchestrator -> AgentService -> ToolRegistry -> mobile tools
 ```
 
-Build artifacts are located at `app/build/outputs/apk/debug/` or `app/build/outputs/apk/release/`.
+## Main Modules
 
-### Setup
+### Runtime And App Lifecycle
 
-1. **Install APK**: Install the APK on an Android device (Android 9+)
-2. **Grant permissions**: Enable all required permissions on the home screen (Accessibility Service, Notification, System Overlay, Battery Whitelist, File Access)
-3. **Configure LLM**: Go to Settings → LLM Config and fill in:
-   - **API Key**: OpenAI or Anthropic API key
-   - **Base URL**: LLM endpoint (default: `https://api.openai.com/v1`, change for custom providers)
-   - **Model Name**: e.g. `gpt-4o`, `claude-sonnet-4-20250514`
-4. **Configure channel**: Go to Settings, select at least one messaging channel (DingTalk/Feishu/QQ/Discord/Telegram/WeChat) and fill in Bot credentials
-5. **Send message**: Send a message via the configured channel to start controlling the device
+- `ClawApplication`: app bootstrap, tool registration, foreground service startup, async initialization
+- `AppViewModel`: central coordinator for permissions, agent init, floating UI, config server, and task orchestration
+- `TaskOrchestrator`: single-task lock, agent lifecycle, task callbacks, cancellation, and result delivery
 
-### Cloud Control Configuration
+### Device Control
 
-1. **Server deployment**: Deploy the companion server application
-2. **Device binding**: Generate a pairing code on the server, enter it in the Android app to complete binding
-3. **Remote control**: Send `cmd_input`, `cmd_tap`, `cmd_swipe` and other commands via the Dashboard
+- `service/ClawAccessibilityService.java`: core Accessibility service for gestures, node lookup, clicks, screenshots, and key operations
+- `device/RemoteExecutor.kt`: translates dashboard commands into device actions and starts AI tasks
+- `device/DeviceInfo.kt`: collects device metadata used for auth and status reporting
+- `floating/FloatingCircleManager.kt`: floating indicator for runtime state
 
-## Tool System
+### Cloud Control
 
-### Common Tools (all devices)
+- `device/CloudHub.kt`: `WebSocket` client for auth, reconnect, heartbeat, RTT ping, status sync, and command handling
+- `device/ScreenStreamer.kt`: live screen streaming with adaptive width tiers
+- `device/RemoteExecutor.kt`: remote command bridge between the dashboard and Accessibility execution
 
-| Tool | Description |
-|------|-------------|
-| `get_screen_info` | Get UI hierarchy tree for AI screen analysis |
-| `find_node_info` | Find elements by text or resource ID |
-| `take_screenshot` | Capture current screen as PNG |
-| `input_text` | Input text into focused text field |
-| `open_app` | Open app by name |
-| `get_installed_apps` | List installed applications |
-| `press_back` / `press_home` | Go back / Return to home screen |
-| `open_recent_apps` | Open recent apps |
-| `expand_notifications` / `collapse_notifications` | Expand / Collapse notification bar |
-| `lock_screen` | Lock the screen |
-| `wait` | Wait for specified duration |
-| `repeat_actions` | Repeat a sequence of actions |
-| `send_file` | Send file to user |
-| `finish` | Complete task and return summary |
+### Local Configuration
 
-### Mobile-Specific Tools
-
-| Tool | Description |
-|------|-------------|
-| `tap` | Tap at coordinates (x, y) |
-| `long_press` | Long press at coordinates |
-| `swipe` | Swipe from point A to point B |
-| `click_by_text` | Click element by visible text |
-| `click_by_id` | Click element by resource ID |
-| `search_app_in_store` | Search for app in app store |
-
-## Tech Stack
-
-### AI / Agent
-
-| Dependency | Version | Purpose |
-|------------|---------|---------|
-| LangChain4j | 1.12.2 | Agent orchestration, tool definition, LLM integration |
-
-### Messaging Channels
-
-| Dependency | Version | Purpose |
-|------------|---------|---------|
-| DingTalk Stream Client | 1.3.12 | DingTalk channel |
-| Feishu OAPI SDK | 2.5.3 | Feishu channel |
-
-### Networking
-
-| Dependency | Version | Purpose |
-|------------|---------|---------|
-| OkHttp | 4.12.0 | HTTP client for LLM calls |
-| Retrofit | 2.11.0 | REST API client |
-| NanoHTTPD | 2.3.1 | LAN config & debug HTTP server |
-
-### Storage & Utilities
-
-| Dependency | Version | Purpose |
-|------------|---------|---------|
-| MMKV | 2.3.0 | High-performance local key-value storage |
-| Gson | 2.13.2 | JSON serialization |
-| ZXing | 3.5.3 | QR code generation |
-| UtilCode | 1.31.1 | Android utility library |
+- `server/ConfigServer.kt`: embedded HTTP server on port `9527`
+- `server/ConfigServerManager.kt`: lifecycle manager for the local config server
+- `app/src/main/assets/web/index.html`: browser configuration page
+- `app/src/main/assets/web/debug.html`: debug-only tool execution page
 
 ### UI
 
-| Dependency | Version | Purpose |
-|------------|---------|---------|
-| Glide | 5.0.5 | Image loading |
-| EasyFloat | 2.0.4 | Floating window |
-| MultiType | 4.3.0 | RecyclerView multi-type adapter |
+- `ui/splash/SplashActivity.kt`: launcher entry
+- `ui/home/HomeActivity.kt`: permission dashboard, LLM entry, cloud bind entry, runtime status
+- `ui/guide/GuideActivity.kt`: first-run permission guide
+- `ui/settings/LlmConfigActivity.kt`: LLM configuration
+- `ui/settings/SettingsActivity.kt`: LAN config, cloud bind, and model entry
+
+## Features Backed By Code
+
+### Accessibility Runtime
+
+- Tap, long press, swipe, and center-point fallback click
+- Find nodes by text or view ID
+- Inspect the full accessibility tree
+- Take screenshots and send files back through the active task channel
+- Trigger system keys such as home, back, recent apps, and lock screen
+
+### AI Task Execution
+
+- LLM config stored locally through `KVUtils`
+- OpenAI-compatible and Anthropic-compatible clients through LangChain4j
+- Agent execution loop with tool calls, round callbacks, token statistics, and cancellation
+- Task execution gated by a single-task lock in `TaskOrchestrator`
+
+### Cloud Dashboard Integration
+
+- Device auth through `/ws/device`
+- Pairing and token validation through HTTP calls to the companion server
+- Dashboard-to-device commands:
+  - `cmd_tap`
+  - `cmd_swipe`
+  - `cmd_input`
+  - `cmd_task`
+  - `cmd_key`
+  - `cmd_cancel_task`
+- Immediate and heartbeat-based device status reporting
+- Adaptive screen streaming based on RTT and frame-send congestion
+
+### Local Browser Config
+
+- `GET /` or `GET /index.html`: configuration page
+- `GET/POST /api/llm`: read and update LLM config
+- `GET/POST /api/channels`: placeholder channel config endpoint
+- `GET /debug.html`: debug page, debug builds only
+- `GET /api/debug/tools`: list runtime tools, debug builds only
+- `POST /api/debug/execute`: execute a tool from browser, debug builds only
+
+## Runtime Tool Surface
+
+The app initializes in mobile mode, so the current runtime tool set is:
+
+### Common Tools
+
+- `get_screen_info`
+- `find_node_info`
+- `input_text`
+- `system_key`
+- `open_app`
+- `get_installed_apps`
+- `take_screenshot`
+- `wait`
+- `repeat_actions`
+- `clipboard`
+- `send_file`
+- `finish`
+
+### Mobile Tools
+
+- `tap`
+- `long_press`
+- `swipe`
+- `scroll_to_find`
+
+## Privacy Behavior
+
+The Accessibility layer contains explicit privacy handling for sensitive apps.
+
+- A blacklist includes apps such as WeChat, Alipay, Bank of China, ICBC, QQ, Google Play, Amap, WeCom, Pinduoduo, and JD
+- In those contexts, the screen tree can switch to a reduced mode to avoid exposing full text content
+- First launch shows a privacy notice explaining that UI element metadata may be sent to the AI service, while password, verification code, and banking text content are not sent as normal text payloads
+
+## Requirements
+
+- Android `9.0+` (`minSdk = 28`)
+- Target / compile SDK `36`
+- Java `17`
+- Android Gradle Plugin `9.1.0`
+- Gradle wrapper included in the repository
+
+## Build
+
+### Debug Build
+
+```bash
+cd touch_app
+export ANDROID_HOME=~/Library/Android/sdk
+./gradlew assembleDebug
+```
+
+### Release Build
+
+```bash
+cd touch_app
+./gradlew assembleRelease
+```
+
+Generated APK files are renamed during the build to:
+
+```text
+Touch App_v<versionName>_<timestamp>.apk
+```
+
+The version is currently maintained in `app/build.gradle.kts`, and `buildConfigField("VERSION_INFO", ...)` also embeds the current Git branch and commit SHA.
+
+## One-Click Build And Install
+
+The repository includes `build_and_install.sh`, which:
+
+1. Reads and bumps the version in `VERSION`
+2. Updates `versionCode` and `versionName` in `app/build.gradle.kts`
+3. Builds the debug APK
+4. Installs it to the connected device through `adb`
+
+Usage:
+
+```bash
+cd touch_app
+./build_and_install.sh
+./build_and_install.sh <device_serial>
+```
+
+## First-Run Setup
+
+After installing the APK, the real setup flow in the app is:
+
+1. Open the app and complete the permission guide
+2. Enable Accessibility Service
+3. Enable persistent notification
+4. Enable overlay permission
+5. Exempt the app from battery optimization
+6. Grant storage access
+7. Configure an LLM if you want to run `cmd_task` or other AI-driven flows
+8. Bind to the cloud server if you want dashboard-based remote control
+
+## LLM Configuration
+
+The LLM settings page stores:
+
+- `API Key`
+- `Base URL`
+- `Model Name`
+- Provider selection metadata
+
+If `Base URL` is empty, the runtime falls back to:
+
+```text
+https://api.openai.com/v1
+```
+
+The current agent config in `AppViewModel` uses:
+
+- `temperature = 0.1`
+- `maxIterations = 100`
+
+## Cloud Control Setup
+
+Touch App is designed to work with the Go companion server in `../server`.
+
+The in-app cloud bind flow is:
+
+1. Enter the server address such as `ws://<host>:8443` or `wss://<host>:8443`
+2. Enter a device ID
+3. Request a pairing code from `POST /api/pairing-code`
+4. Complete pairing in the dashboard
+5. Paste the issued token back into the app
+6. Validate the token
+7. Let `CloudHub` connect to `GET /ws/device`
+
+Once connected, the app will:
+
+- Authenticate with device metadata
+- Stream the screen
+- Report battery, screen state, and permission state
+- Accept remote dashboard commands
+
+## LAN Config Server
+
+Touch App also exposes a local configuration server built on NanoHTTPD.
+
+- Port: `9527`
+- Entry page: `http://<phone-ip>:9527/`
+- LLM config API: `/api/llm`
+- Debug UI: `/debug.html` in debug builds only
+
+This is mainly intended for quick browser-side configuration and tool debugging on the same network.
 
 ## Project Structure
 
+```text
+touch_app/
+├── app/
+│   ├── src/main/java/com/nextflow/nftouch/
+│   │   ├── agent/          # Agent loop and LLM clients
+│   │   ├── base/           # Base app / activity classes
+│   │   ├── channel/        # Current channel abstraction, currently Cloud
+│   │   ├── device/         # Cloud hub, remote executor, screen streaming, device info
+│   │   ├── floating/       # Floating runtime indicator
+│   │   ├── server/         # Embedded LAN config server
+│   │   ├── service/        # Accessibility, foreground, boot, keep-alive services
+│   │   ├── tool/           # Tool abstraction and implementations
+│   │   ├── ui/             # Splash, home, guide, settings, web UI
+│   │   ├── utils/          # KV, logging, helpers
+│   │   ├── widget/         # Reusable custom views
+│   │   ├── AppViewModel.kt
+│   │   ├── ClawApplication.kt
+│   │   └── TaskOrchestrator.kt
+│   ├── src/main/assets/web/
+│   │   ├── index.html      # LAN config page
+│   │   └── debug.html      # Debug tool page
+│   └── src/main/AndroidManifest.xml
+├── gradle/
+├── build_and_install.sh
+├── VERSION
+└── README.md
 ```
-app/src/main/java/com/nextflow/nftouch/
-├── agent/                  # Agent loop, config, callback
-│   ├── langchain/          # LangChain4j bridge & OkHttp adapters
-│   └── llm/                # LLM clients (OpenAI, Anthropic)
-├── base/                   # BaseActivity (screen density adaptation)
-├── channel/                # Message channel handlers
-│   ├── dingtalk/
-│   ├── feishu/
-│   ├── qqbot/
-│   ├── discord/
-│   ├── telegram/
-│   └── wechat/
-├── floating/               # Floating button UI manager
-├── server/                 # LAN config & debug HTTP server
-├── service/                # Accessibility, foreground, keep-alive services
-├── tool/                   # Tool abstraction layer & registry
-│   └── impl/               # Tool implementations (common/mobile/TV)
-├── ui/                     # Activities (splash, home, guide, settings)
-├── utils/                  # KVUtils, XLog, formatting utilities
-└── widget/                 # Custom UI components
-```
 
-## LAN Configuration Server
+## Key Dependencies
 
-An HTTP server based on NanoHTTPD runs on port 9527 for convenient configuration from a PC browser:
+- `dev.langchain4j:langchain4j-core`
+- `dev.langchain4j:langchain4j-open-ai`
+- `dev.langchain4j:langchain4j-anthropic`
+- `com.squareup.okhttp3:okhttp`
+- `com.squareup.retrofit2:retrofit`
+- `com.tencent:mmkv-static`
+- `org.nanohttpd:nanohttpd`
+- `com.github.princekin-f:EasyFloat`
+- `com.github.bumptech.glide:glide`
+- `com.google.zxing:core`
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/` | GET | Configuration web page |
-| `/api/channels` | GET/POST | Read / Update channel credentials |
-| `/api/llm` | GET/POST | Read / Update LLM configuration |
+## Notes And Limitations
 
-On GET requests, secrets are masked (only last 4 characters shown). Debug builds additionally expose `/debug.html`, providing a tool execution console.
+- Accessibility permission is mandatory for any real device control
+- `cmd_task` requires a valid LLM configuration
+- Text input has multiple fallbacks, but the shell-based fallback only supports ASCII text
+- The current repository contains channel-related UI wording, but the implemented runtime message channel is currently `Cloud`
+- Sensitive apps may expose a reduced accessibility tree instead of full text content
 
-## Development Guide
+## Companion Server
 
-### Adding a New Tool
+Touch App depends on the Go backend in `../server` for:
 
-1. Create a tool class extending `BaseTool`
-2. Implement `execute(Map<String, Any>): ToolResult`
-3. Provide bilingual (English/Chinese) descriptions and typed parameter declarations
-4. Register the tool in `ToolRegistry`
+- pairing code generation
+- token validation
+- device unbind
+- dashboard sessions
+- cloud device sessions
+- browser-based remote control
 
-### Adding a New Channel
-
-1. Implement the `ChannelHandler` interface
-2. Register the channel handler in `ChannelManager`
-3. Implement message receiving, parsing, and sending logic
-
-### Debugging Tips
-
-- Use `XLog` for log output
-- Use the LAN config server's `/debug.html` for tool execution debugging
-- Check Accessibility Service logs for UI interaction troubleshooting
-
-## Known Limitations
-
-- Protected system windows (such as permission dialogs) block node tree access and gesture injection
-- Some apps use custom input fields that may require special handling
-- WeChat and similar apps may have input fields outside standard FOCUS_INPUT
+If you are deploying the full system, read `../server/README.md` together with this file.
 
 ## License
 
-```
-Copyright 2026 NextFlow Matrix
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-```
+See `LICENSE`.
