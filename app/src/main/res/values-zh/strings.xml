@@ -1,0 +1,266 @@
+<resources>
+    <string name="app_name">NFTouch</string>
+
+    <!-- 通用 -->
+    <string name="common_confirm">确定</string>
+    <string name="common_cancel">取消</string>
+    <string name="common_close">关闭</string>
+    <string name="common_save">保存</string>
+    <string name="common_agree">同意</string>
+    <string name="common_bound">已绑定</string>
+    <string name="common_unbound">未绑定</string>
+    <string name="common_unconfigured">未配置</string>
+    <string name="common_unbound_success">已解除绑定</string>
+    <string name="common_load_failed">加载失败: %s</string>
+
+    <string name="app_slogan">一款能做事的AI Agents</string>
+
+    <!-- 引导页 -->
+    <string name="guide_page_title">权限设置</string>
+    <string name="guide_page_subtitle">请开启以下权限，以确保应用正常运行</string>
+    <string name="guide_skip">跳过</string>
+    <string name="guide_start">开始使用</string>
+    <string name="guide_title_accessibility">无障碍服务</string>
+    <string name="guide_desc_accessibility">这是 AI 自动操控设备的核心权限。\n\n1. 前往系统设置 → 无障碍 → 已下载的应用\n2. 在列表中找到「NFTouch」\n3. 开启开关\n4. 在系统弹窗中确认</string>
+    <string name="guide_title_notification">常驻通知</string>
+    <string name="guide_desc_notification">保持应用在后台运行，防止被系统杀死。\n\n在首页点击对应卡片即可开启。Android 13 及以上会先请求通知权限。</string>
+    <string name="guide_title_overlay">悬浮窗</string>
+    <string name="guide_desc_overlay">显示 AI 执行状态的浮动面板。\n\n1. 前往系统设置 → 应用 → NFTouch\n2. 找到「显示在其他应用上方」\n3. 开启开关</string>
+    <string name="guide_title_battery">电池白名单</string>
+    <string name="guide_desc_battery">防止系统在后台关闭应用。\n\n在首页点击对应卡片，然后在系统弹窗中确认「允许」。(部分品牌手机需要修改为"无限制")</string>
+    <string name="guide_title_storage">文件访问</string>
+    <string name="guide_desc_storage">允许 AI 读写设备上的文件。\n\nAndroid 11 及以上：前往设置开启「所有文件访问」\nAndroid 10 及以下：在弹窗中授予权限</string>
+
+    <!-- 首页 -->
+    <string name="home_need_notification_permission">需要通知权限才能显示常驻通知</string>
+    <string name="home_enable_accessibility">请开启 NFTouch 无障碍服务</string>
+    <string name="home_accessibility_enabled">已开启无障碍服务</string>
+    <string name="home_notification_enabled">已开启常驻通知</string>
+    <string name="home_overlay_enabled">已开启悬浮窗权限</string>
+    <string name="home_battery_ignored">已忽略电池优化</string>
+    <string name="home_permission_enabled">已开启</string>
+    <string name="home_card_accessibility_title">无障碍服务</string>
+    <string name="home_card_accessibility_subtitle">用于自动化操作手机</string>
+    <string name="home_card_notification_title">常驻通知</string>
+    <string name="home_card_notification_subtitle">显示运行状态</string>
+    <string name="home_card_system_window_title">系统窗口</string>
+    <string name="home_card_system_window_subtitle">悬浮窗显示操作面板</string>
+    <string name="home_card_battery_title">电池白名单</string>
+    <string name="home_card_battery_subtitle">防止后台被系统杀死</string>
+    <string name="home_card_storage_title">文件读写</string>
+    <string name="home_card_storage_subtitle">读写设备上的文件</string>
+    <string name="home_storage_enabled">已获得文件读写权限</string>
+    <string name="home_enable_storage">请允许访问所有文件</string>
+    <string name="home_cancel_task">结束当前任务</string>
+    <string name="home_cancel_task_success">已结束当前AI任务</string>
+    <string name="home_no_task_running">当前没有进行中的任务</string>
+    <string name="home_group_model">模型配置</string>
+    <string name="home_group_cloud">云控绑定</string>
+
+    <!-- 设置 -->
+    <string name="settings_title">设置</string>
+    <string name="settings_group_channel">通道</string>
+    <string name="settings_group_model">模型</string>
+
+    <!-- 解绑 -->
+    <string name="unbind_title">解除绑定</string>
+    <string name="unbind_message">确定要解除%1$s的绑定吗？解除后将无法通过%2$s接收消息。</string>
+    <string name="unbind_action">解除绑定</string>
+
+    <!-- 通道配置 -->
+    <string name="channel_config_saved">配置已保存</string>
+    <string name="channel_config_lan_hint">💡 在设置页开启「局域网配置」，即可通过电脑浏览器配置</string>
+    <string name="channel_config_lan_hint_running">💡 电脑浏览器打开 %s 即可配置</string>
+    <string name="channel_config_lan_copied">已复制地址</string>
+
+    <!-- LLM 配置 -->
+    <string name="llm_config_title">LLM 配置</string>
+    <string name="llm_config_tip">请填写你的 LLM API Key、Base URL 和模型名称，数据仅保存在本地。</string>
+    <string name="llm_config_api_key">API Key</string>
+    <string name="llm_config_api_key_hint">如 sk-xxx（OpenAI）或其它服务商的 Key</string>
+    <string name="llm_config_base_url">Base URL</string>
+    <string name="llm_config_base_url_hint">如 https://api.openai.com/v1（留空则使用 OpenAI 默认）</string>
+    <string name="llm_config_model_name">模型名称</string>
+    <string name="llm_config_model_name_hint">如 gpt-4o、gpt-4o-mini、claude-3-5-sonnet</string>
+    <string name="llm_config_saved">LLM 配置已保存</string>
+    <string name="llm_config_api_key_required">请填写 API Key</string>
+    <string name="llm_config_provider">服务商</string>
+    <string name="llm_config_select_provider">选择服务商</string>
+    <string name="llm_config_custom">自定义</string>
+    <string name="menu_llm_config">LLM 配置</string>
+    <string name="menu_llm_config_subtitle">配置大模型</string>
+
+    <!-- 设置菜单项 -->
+    <string name="menu_lan_config">局域网配置</string>
+    <string name="menu_cloud_bind">云控绑定</string>
+    <string name="menu_cloud_bind_subtitle">绑定云控设备</string>
+    <string name="lan_config_stopped">已关闭</string>
+    <string name="lan_config_no_wifi">请先连接 WiFi</string>
+
+    <!-- 协议弹窗 -->
+    <string name="protocol_agree_title">个人信息保护指引</string>
+    <string name="protocol_alert_title">服务协议和隐私保护</string>
+    <string name="protocol_disagree">不同意</string>
+    <string name="protocol_agree_continue">同意并继续</string>
+
+    <!-- 悬浮窗 -->
+    <string name="floating_ai_label">AI</string>
+    <string name="floating_task_received">已收到：\"%s\"</string>
+
+    <!-- 前台服务通知 -->
+    <string name="notification_channel_name">NFTouch 运行状态</string>
+    <string name="notification_channel_description">显示 NFTouch 运行状态及统计数据</string>
+    <string name="notification_content_title">NFTouch 运行中</string>
+    <string name="notification_content_text">AI Agent 服务正在运行</string>
+
+    <!-- 通道消息（发给用户的回复） -->
+    <string name="channel_msg_task_cancelled">任务已手动取消</string>
+    <string name="channel_msg_service_not_ready">服务未就绪，请稍后重试</string>
+    <string name="channel_msg_tool_success">成功</string>
+    <string name="channel_msg_tool_failure">失败</string>
+    <string name="channel_msg_tool_execution">[%1$s]：%2$s</string>
+    <string name="channel_msg_task_error">遇到了错误：%s</string>
+    <string name="channel_msg_no_accessibility">缺少无障碍权限，无法执行任务</string>
+    <string name="channel_msg_task_in_progress">有任务执行中，请稍候</string>
+    <string name="channel_msg_system_dialog_blocked">可能有系统弹窗遮挡了屏幕，请检查并手动处理后重试</string>
+
+    <!-- 无障碍 -->
+    <string name="cd_back_button">返回</string>
+    <string name="cd_settings">设置</string>
+    <string name="cd_clear_input">清除输入</string>
+    <string name="cd_checkbox">切换选中状态</string>
+    <string name="cd_selected">已选中</string>
+    <string name="cd_task_success">任务完成</string>
+    <string name="cd_task_error">任务失败</string>
+    <string name="cd_channel_logo">渠道图标</string>
+    <string name="cd_app_logo">应用图标</string>
+    <string name="cd_qr_code">二维码</string>
+    <string name="cd_toggle_password">显示或隐藏密码</string>
+    <string name="cd_copy">复制</string>
+    <string name="cd_arrow_right">更多</string>
+    <string name="cd_empty_state">暂无数据</string>
+    <string name="cd_error_state">加载失败</string>
+
+    <!-- Agent 服务 -->
+    <string name="agent_accessibility_not_enabled">无障碍服务未开启，无法执行任务</string>
+    <string name="agent_task_cancelled">任务已取消</string>
+    <string name="agent_task_completed">任务完成</string>
+    <string name="agent_task_cancel">任务取消</string>
+    <string name="agent_api_call_failed">AI 服务调用失败: %s</string>
+    <string name="agent_max_iterations">在未完成任务的情况下达到了最大迭代次数 (%d)</string>
+
+    <!-- 文件工具 -->
+    <string name="tool_no_storage_permission">没有读写文件的权限</string>
+    <string name="tool_file_not_found">文件不存在: %s</string>
+    <string name="tool_not_a_file">路径不是文件: %s</string>
+    <string name="tool_no_task_channel">当前没有进行中的任务通道</string>
+    <string name="tool_file_sent">文件已发送: %s</string>
+    <string name="tool_file_send_failed">文件发送失败: %s</string>
+
+    <!-- 工具名称 -->
+    <string name="tool_name_screenshot">截屏</string>
+    <string name="tool_name_send_file">发送文件</string>
+    <string name="tool_name_wait">等待</string>
+    <string name="tool_name_get_screen_info">获取屏幕信息</string>
+    <string name="tool_name_finish">完成任务</string>
+    <string name="tool_name_open_app">打开应用</string>
+    <string name="tool_name_get_installed_apps">获取应用列表</string>
+    <string name="tool_name_system_key">系统按键</string>
+    <string name="tool_name_tap">点击</string>
+    <string name="tool_name_swipe">滑动</string>
+    <string name="tool_name_input_text">输入文本</string>
+    <string name="tool_name_find_node_info">查找节点</string>
+    <string name="tool_name_long_press">长按</string>
+    <string name="tool_name_repeat_actions">重复执行动作</string>
+    <string name="tool_name_volume_up">音量+</string>
+    <string name="tool_name_volume_down">音量-</string>
+    <string name="tool_name_dpad_up">方向上</string>
+    <string name="tool_name_dpad_down">方向下</string>
+    <string name="tool_name_dpad_left">方向左</string>
+    <string name="tool_name_dpad_right">方向右</string>
+    <string name="tool_name_dpad_center">方向中心</string>
+    <string name="tool_name_press_menu">菜单</string>
+    <string name="tool_name_press_power">电源</string>
+    <string name="tool_name_search_app">搜索APP</string>
+    <string name="tool_name_clipboard">剪贴板</string>
+    <string name="tool_name_scroll_to_find">滚动查找</string>
+
+    <!-- 输入弹窗 -->
+    <string name="input_dialog_need_more">至少输入%d个字符</string>
+    <string name="input_dialog_need_less">最多输入%d个字符</string>
+    <string name="input_dialog_no_zero">请输入非零数值</string>
+
+    <!-- 云控配置 -->
+    <string name="cloud_config_title">云控服务器地址</string>
+    <string name="cloud_config_hint">ws://192.168.x.x:8443</string>
+    <string name="cloud_config_next">下一步</string>
+    <string name="cloud_config_device_id">设备 ID</string>
+    <string name="cloud_config_device_id_hint">给设备起个名字</string>
+    <string name="cloud_config_get_code">获取配对码</string>
+    <string name="cloud_config_loading">正在获取配对码…</string>
+    <string name="cloud_config_code_failed">获取配对码失败</string>
+    <string name="cloud_config_server_required">请输入服务器地址</string>
+    <string name="cloud_config_device_id_required">请输入设备ID</string>
+    <string name="cloud_config_duplicate_title">设备ID重复</string>
+    <string name="cloud_config_continue">继续使用</string>
+    <string name="cloud_config_change">换一个</string>
+    <string name="cloud_config_code_title">配对码: %s</string>
+    <string name="cloud_config_code_message">10分钟内有效，请在网页中控台输入配对码完成绑定后，回到此处输入Token</string>
+    <string name="cloud_config_input_token">输入 Token</string>
+    <string name="cloud_config_copy">复制</string>
+    <string name="cloud_config_bind_token">绑定 Token</string>
+    <string name="cloud_config_bind_token_hint">网页端配对后获得的 Token</string>
+    <string name="cloud_config_save">保存</string>
+    <string name="cloud_config_token_required">请输入Token</string>
+    <string name="cloud_config_validating_token">正在校验 Token…</string>
+    <string name="cloud_config_token_invalid">Token 无效，请检查后重试</string>
+    <string name="cloud_config_token_validate_failed">校验 Token 失败: %s</string>
+    <string name="cloud_config_saved">云控配置已保存</string>
+    <string name="cloud_config_code_copied">配对码已复制</string>
+    <string name="cloud_config_connect_failed">连接服务器失败: %s</string>
+
+    <!-- 远程执行器错误 -->
+    <string name="remote_invalid_x">无效的x坐标</string>
+    <string name="remote_invalid_y">无效的y坐标</string>
+    <string name="remote_invalid_start_x">无效的起始x坐标</string>
+    <string name="remote_invalid_start_y">无效的起始y坐标</string>
+    <string name="remote_invalid_end_x">无效的结束x坐标</string>
+    <string name="remote_invalid_end_y">无效的结束y坐标</string>
+    <string name="remote_no_input_text">未提供输入文本</string>
+    <string name="remote_no_accessibility">无障碍服务未运行</string>
+    <string name="remote_input_all_failed">所有输入方式均失败，请手动点击目标输入框后重试</string>
+    <string name="remote_no_task_prompt">未提供任务提示</string>
+    <string name="remote_no_llm_config">设备未配置大模型，请在 NFTouch 设置中配置 LLM</string>
+    <string name="remote_no_orchestrator">任务编排器未初始化</string>
+    <string name="remote_task_in_progress">已有任务在执行中，请稍后再试</string>
+    <string name="remote_no_key">未指定按键</string>
+    <string name="remote_unknown_key">未知的按键类型: %s</string>
+    <string name="remote_unknown_command">未知的命令类型: %s</string>
+
+    <!-- LLM Config -->
+    <string name="llm_config_select_provider_or_url">请选择 Provider 或填写 Base URL</string>
+
+    <string name="remote_input_ok">消息已输入: %s</string>
+    <string name="remote_paste_ok">消息已粘贴: %s</string>
+    <string name="remote_task_started">任务已开始执行: %s</string>
+
+    <string name="tool_take_screenshot_desc">对当前屏幕截图，保存为PNG文件并返回路径。需要Android 11+。</string>
+    <string name="tool_get_installed_apps_desc">获取已安装的可启动应用列表（应用名+包名）。不确定包名时使用，然后用open_app打开。</string>
+    <string name="tool_input_text_desc">向聚焦文本框输入文本。先tap获取焦点再调用。默认先清空已有内容。设置clear_first=false追加。</string>
+    <string name="tool_open_app_desc">通过包名打开应用（如\'com.android.settings\'）。</string>
+
+    <string name="cloud_config_duplicate_message">当前设备ID: %1$s
+配对码: %2$s</string>
+
+    <string name="privacy_notice_title">数据隐私声明</string>
+    <string name="privacy_notice_message">NFTouch 会将屏幕元素信息（如按钮文字、输入框类型）发送到 AI 服务器以便理解如何操作设备。
+
+我们不会发送：
+• 密码内容
+• 验证码
+• 银行/支付类应用的文本内容
+
+金融应用中的交互元素（可点击按钮、可编辑字段）仍可通过位置被识别。您可以随时查看隐私设置。</string>
+    <string name="privacy_notice_agree">我已知晓，继续</string>
+    <string name="privacy_notice_settings">隐私设置</string>
+</resources>

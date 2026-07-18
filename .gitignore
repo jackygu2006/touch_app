@@ -1,0 +1,21 @@
+*.iml
+.gradle
+.gradle-home
+/local.properties
+.DS_Store
+/build
+/app/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+*.jks
+debug.keystore
+.kotlin/
+/.claude/
+/.idea/
+*.apk
+*.hprof
+
+# Kotlin error logs
+.kotlin/
